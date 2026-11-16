@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloud Bot Controller</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style> body { background: #0f172a; color: white; font-family: sans-serif; } </style>
+</head>
+<body class="min-h-screen flex flex-col items-center py-10 px-4">
+    <h1 class="text-2xl font-bold mb-6 text-indigo-400">☁️ Cloud Bot Controller</h1>
+
+    <div class="w-full max-w-md bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-700">
+        
+        <label class="block text-sm font-medium mb-2">Discord Bot Token</label>
+        <input type="password" id="token" class="w-full bg-slate-900 p-3 rounded-lg mb-4 text-white outline-none border border-slate-600 focus:border-indigo-500" placeholder="ใส่ Token ที่นี่...">
+
+        <label class="block text-sm font-medium mb-2">Python Code (Bot Logic)</label>
+        <textarea id="code" class="w-full h-64 bg-slate-900 p-3 rounded-lg mb-4 text-green-400 font-mono text-xs outline-none border border-slate-600 focus:border-indigo-500" spellcheck="false">import discord
+from discord.ext import commands
+import os
+
+TOKEN = os.environ.get("DISCORD_TOKEN")
+bot = commands.Bot(command_prefix="!", intents=discord.Intents.all())
+
+@bot.event
+async def on_ready():
+    print(f"บอท {bot.user} ออนไลน์แล้ว!")
+
+@bot.command()
+async def ping(ctx):
+    await ctx.send("Pong! บอททำงานอยู่")
+
+bot.run(TOKEN)</textarea>
+
+        <div class="flex gap-2">
+            <button onclick="startBot()" class="flex-1 bg-indigo-600 hover:bg-indigo-500 py-3 rounded-lg font-bold transition">▶ Start Bot</button>
+            <button onclick="stopBot()" class="flex-1 bg-red-600 hover:bg-red-500 py-3 rounded-lg font-bold transition">⏹ Stop Bot</button>
+        </div>
+        
+        <div id="status" class="mt-4 text-center text-sm font-medium text-yellow-400">Status: Unknown</div>
+    </div>
+
+    <script>
+        // 🔴 ลิงก์ Backend ของคุณที่ได้จาก Render
+        const API_URL = "https://bot-backend-dmkj.onrender.com"; 
+
+        async function startBot() {
+            const token = document.getElementById('token').value;
+            const code = document.getElementById('code').value;
+            
+            if(!token || !code) {
+                alert("กรุณาใส่ Token และโค้ดให้ครบ!");
+                return;
+            }
+
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerText = "Status: กำลังเริ่มบอท...";
+            statusDiv.className = "mt-4 text-center text-sm font-medium text-blue-400";
+
+            try {
+                const res = await fetch(`${API_URL}/start`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({token, code})
+                });
+                const data = await res.json();
+                
+                if(res.ok) {
+                    statusDiv.innerText = `Status: ${data.message}`;
+                    statusDiv.className = "mt-4 text-center text-sm font-medium text-green-400";
+                } else {
+                    statusDiv.innerText = `Status: Error - ${data.error}`;
+                    statusDiv.className = "mt-4 text-center text-sm font-medium text-red-400";
+                }
+            } catch(e) {
+                statusDiv.innerText = "Status: ไม่สามารถเชื่อมต่อ Backend ได้";
+                statusDiv.className = "mt-4 text-center text-sm font-medium text-red-400";
+            }
+        }
+
+        async function stopBot() {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerText = "Status: กำลังหยุดบอท...";
+            statusDiv.className = "mt-4 text-center text-sm font-medium text-yellow-400";
+
+            try {
+                const res = await fetch(`${API_URL}/stop`, {method: 'POST'});
+                const data = await res.json();
+                
+                if(res.ok) {
+                    statusDiv.innerText = `Status: ${data.message}`;
+                    statusDiv.className = "mt-4 text-center text-sm font-medium text-slate-400";
+                } else {
+                    statusDiv.innerText = `Status: Error - ${data.error}`;
+                    statusDiv.className = "mt-4 text-center text-sm font-medium text-red-400";
+                }
+            } catch(e) {
+                statusDiv.innerText = "Status: ไม่สามารถเชื่อมต่อ Backend ได้";
+                statusDiv.className = "mt-4 text-center text-sm font-medium text-red-400";
+            }
+        }
+    </script>
+</body>
+</html>
