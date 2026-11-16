@@ -3,7 +3,7 @@ Flask
 Flask-SocketIO
 Flask-Cors
 gunicorn
-eventlet
+gevent
 Werkzeug
 
 # --- Discord & Bots ---
