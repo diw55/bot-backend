@@ -4,59 +4,185 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cloud Bot Controller</title>
+    <!-- นำเข้าฟอนต์และไอคอน -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
-    <style> body { background: #0f172a; color: white; font-family: sans-serif; } </style>
-</head>
-<body class="min-h-screen flex flex-col items-center py-10 px-4">
-    <h1 class="text-2xl font-bold mb-6 text-indigo-400">☁️ Cloud Bot Controller</h1>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0b0f19; /* สีน้ำเงินเข้มเกือบดำ */
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(59, 130, 246, 0.15), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(139, 92, 246, 0.15), transparent 25%);
+            color: #e2e8f0;
+            min-height: 100vh;
+            margin: 0;
+            overflow-x: hidden;
+        }
 
-    <div class="w-full max-w-md bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-700">
+        /* เอฟเฟกต์กระจกฝ้า */
+        .glass-panel {
+            background: rgba(17, 24, 39, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        /* ช่องกรอกข้อมูล */
+        .custom-input {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            transition: all 0.3s ease;
+        }
+        .custom-input:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);
+            outline: none;
+        }
+
+        /* ปุ่มกด */
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+            transition: all 0.2s ease;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.5);
+        }
+        .btn-primary:active { transform: translateY(0); }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            box-shadow: 0 4px 15px rgba(220, 38, 38, 0.3);
+            transition: all 0.2s ease;
+        }
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(220, 38, 38, 0.5);
+        }
+
+        /* หน้าจอ Terminal */
+        .terminal-screen {
+            font-family: 'Fira Code', monospace;
+            background: #050505;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.8);
+        }
+        .terminal-text { color: #4ade80; } /* สีเขียว Matrix */
         
-        <label class="block text-sm font-medium mb-2">Discord Bot Token</label>
-        <input type="password" id="token" class="w-full bg-slate-900 p-3 rounded-lg mb-4 text-white outline-none border border-slate-600 focus:border-indigo-500" placeholder="ใส่ Token ที่นี่...">
+        /* Scrollbar สวยๆ */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.3); }
+    </style>
+</head>
+<body class="flex items-center justify-center p-4">
 
-        <label class="block text-sm font-medium mb-2">Python Code (Bot Logic)</label>
-        <textarea id="code" class="w-full h-64 bg-slate-900 p-3 rounded-lg mb-4 text-green-400 font-mono text-xs outline-none border border-slate-600 focus:border-indigo-500" spellcheck="false">import discord
+    <div class="w-full max-w-md">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-tr from-blue-600 to-purple-600 shadow-lg shadow-blue-500/30 mb-4">
+                <i class="fa-solid fa-robot text-3xl text-white"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-white tracking-tight">Cloud Controller</h1>
+            <p class="text-sm text-slate-400 mt-1">Manage your Discord bot in real-time</p>
+        </div>
+
+        <!-- Main Panel -->
+        <div class="glass-panel rounded-2xl p-6">
+            
+            <!-- Token Input -->
+            <div class="mb-5">
+                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Bot Token</label>
+                <div class="relative">
+                    <i class="fa-solid fa-key absolute left-4 top-3.5 text-slate-500"></i>
+                    <input type="password" id="token" class="custom-input w-full pl-11 pr-4 py-3 rounded-xl text-sm" placeholder="MTUw...">
+                </div>
+            </div>
+
+            <!-- Code Editor -->
+            <div class="mb-6">
+                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Python Logic</label>
+                <textarea id="code" class="custom-input w-full h-40 p-4 rounded-xl text-xs font-mono leading-relaxed" spellcheck="false">import discord
 from discord.ext import commands
 import os
 
-TOKEN = os.environ.get("DISCORD_TOKEN")
 bot = commands.Bot(command_prefix="!", intents=discord.Intents.all())
 
 @bot.event
 async def on_ready():
-    print(f"บอท {bot.user} ออนไลน์แล้ว!")
+    print(f"✅ Bot {bot.user} is online!")
 
 @bot.command()
 async def ping(ctx):
-    await ctx.send("Pong! บอททำงานอยู่")
+    await ctx.send("Pong!")
 
-bot.run(TOKEN)</textarea>
+bot.run(os.environ.get("DISCORD_TOKEN"))</textarea>
+            </div>
 
-        <div class="flex gap-2">
-            <button onclick="startBot()" class="flex-1 bg-indigo-600 hover:bg-indigo-500 py-3 rounded-lg font-bold transition">▶ Start Bot</button>
-            <button onclick="stopBot()" class="flex-1 bg-red-600 hover:bg-red-500 py-3 rounded-lg font-bold transition">⏹ Stop Bot</button>
+            <!-- Action Buttons -->
+            <div class="flex gap-3 mb-6">
+                <button onclick="startBot()" class="btn-primary flex-1 text-white font-semibold py-3 rounded-xl flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-play"></i> Start
+                </button>
+                <button onclick="stopBot()" class="btn-danger flex-1 text-white font-semibold py-3 rounded-xl flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-stop"></i> Stop
+                </button>
+            </div>
+
+            <!-- Status -->
+            <div id="status-box" class="bg-slate-800/50 border border-slate-700/50 rounded-xl p-3 flex items-center justify-between">
+                <span class="text-xs font-medium text-slate-400">System Status</span>
+                <div class="flex items-center gap-2">
+                    <div id="status-dot" class="w-2.5 h-2.5 rounded-full bg-yellow-500 animate-pulse"></div>
+                    <span id="status" class="text-sm font-bold text-yellow-500">Offline</span>
+                </div>
+            </div>
         </div>
-        
-        <div id="status" class="mt-4 text-center text-sm font-medium text-yellow-400">Status: Unknown</div>
+
+        <!-- Console -->
+        <div class="glass-panel rounded-2xl mt-4 overflow-hidden">
+            <div class="bg-white/5 px-4 py-2 flex items-center gap-2 border-b border-white/10">
+                <i class="fa-solid fa-terminal text-slate-400 text-xs"></i>
+                <span class="text-xs font-medium text-slate-400">Console Output</span>
+            </div>
+            <div id="console" class="terminal-screen h-48 overflow-y-auto p-4 text-xs whitespace-pre-wrap"></div>
+        </div>
     </div>
 
     <script>
-        // 🔴 ลิงก์ Backend ของคุณที่ได้จาก Render
+        // 🔴 ลิงก์ Backend ของคุณ
         const API_URL = "https://bot-backend-dmkj.onrender.com"; 
+        const socket = io(API_URL);
+
+        const statusDiv = document.getElementById('status');
+        const statusDot = document.getElementById('status-dot');
+        const consoleDiv = document.getElementById('console');
+
+        // รับ Log แบบ Real-time จาก WebSocket
+        socket.on('bot_log', (data) => {
+            consoleDiv.innerHTML += `<div class="terminal-text">${data.log}</div>`;
+            consoleDiv.scrollTop = consoleDiv.scrollHeight;
+        });
 
         async function startBot() {
             const token = document.getElementById('token').value;
             const code = document.getElementById('code').value;
             
-            if(!token || !code) {
-                alert("กรุณาใส่ Token และโค้ดให้ครบ!");
-                return;
-            }
+            if(!token || !code) return alert("กรุณาใส่ Token และโค้ดให้ครบ!");
 
-            const statusDiv = document.getElementById('status');
-            statusDiv.innerText = "Status: กำลังเริ่มบอท...";
-            statusDiv.className = "mt-4 text-center text-sm font-medium text-blue-400";
+            // อัปเดตสถานะ
+            statusDiv.innerText = "Connecting...";
+            statusDiv.className = "text-sm font-bold text-blue-400";
+            statusDot.className = "w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse";
+            consoleDiv.innerHTML = '<div class="text-slate-500">Initializing backend...</div>';
 
             try {
                 const res = await fetch(`${API_URL}/start`, {
@@ -67,38 +193,35 @@ bot.run(TOKEN)</textarea>
                 const data = await res.json();
                 
                 if(res.ok) {
-                    statusDiv.innerText = `Status: ${data.message}`;
-                    statusDiv.className = "mt-4 text-center text-sm font-medium text-green-400";
+                    statusDiv.innerText = "Online";
+                    statusDiv.className = "text-sm font-bold text-green-500";
+                    statusDot.className = "w-2.5 h-2.5 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.8)]";
                 } else {
-                    statusDiv.innerText = `Status: Error - ${data.error}`;
-                    statusDiv.className = "mt-4 text-center text-sm font-medium text-red-400";
+                    statusDiv.innerText = "Error";
+                    statusDiv.className = "text-sm font-bold text-red-500";
+                    statusDot.className = "w-2.5 h-2.5 rounded-full bg-red-500";
+                    consoleDiv.innerHTML += `<div class="text-red-400">Error: ${data.error}</div>`;
                 }
             } catch(e) {
-                statusDiv.innerText = "Status: ไม่สามารถเชื่อมต่อ Backend ได้";
-                statusDiv.className = "mt-4 text-center text-sm font-medium text-red-400";
+                statusDiv.innerText = "Backend Offline";
+                statusDiv.className = "text-sm font-bold text-red-500";
+                statusDot.className = "w-2.5 h-2.5 rounded-full bg-red-500";
+                consoleDiv.innerHTML += `<div class="text-red-400">Network Error: Cannot reach server</div>`;
             }
         }
 
         async function stopBot() {
-            const statusDiv = document.getElementById('status');
-            statusDiv.innerText = "Status: กำลังหยุดบอท...";
-            statusDiv.className = "mt-4 text-center text-sm font-medium text-yellow-400";
+            statusDiv.innerText = "Stopping...";
+            statusDiv.className = "text-sm font-bold text-yellow-400";
+            statusDot.className = "w-2.5 h-2.5 rounded-full bg-yellow-500 animate-pulse";
 
             try {
-                const res = await fetch(`${API_URL}/stop`, {method: 'POST'});
-                const data = await res.json();
-                
-                if(res.ok) {
-                    statusDiv.innerText = `Status: ${data.message}`;
-                    statusDiv.className = "mt-4 text-center text-sm font-medium text-slate-400";
-                } else {
-                    statusDiv.innerText = `Status: Error - ${data.error}`;
-                    statusDiv.className = "mt-4 text-center text-sm font-medium text-red-400";
-                }
-            } catch(e) {
-                statusDiv.innerText = "Status: ไม่สามารถเชื่อมต่อ Backend ได้";
-                statusDiv.className = "mt-4 text-center text-sm font-medium text-red-400";
-            }
+                await fetch(`${API_URL}/stop`, {method: 'POST'});
+                statusDiv.innerText = "Offline";
+                statusDiv.className = "text-sm font-bold text-slate-400";
+                statusDot.className = "w-2.5 h-2.5 rounded-full bg-slate-500";
+                consoleDiv.innerHTML += `<div class="text-yellow-500">Bot manually stopped.</div>`;
+            } catch(e) {}
         }
     </script>
 </body>
