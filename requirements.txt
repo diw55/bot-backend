@@ -9,3 +9,8 @@ python-dotenv
 requests
 aiohttp
 pytz
+Flask
+flask-cors
+discord.py
+aiohttp
+python-dotenv
