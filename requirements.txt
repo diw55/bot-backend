@@ -1,0 +1,4 @@
+Flask
+flask-cors
+discord.py
+gunicorn
