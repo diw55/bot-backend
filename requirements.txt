@@ -2,3 +2,10 @@ Flask
 flask-cors
 discord.py
 gunicorn
+Flask
+flask-cors
+discord.py
+python-dotenv
+requests
+aiohttp
+pytz
