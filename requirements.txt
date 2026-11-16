@@ -1,16 +1,61 @@
+# --- Core Web & Server ---
 Flask
-flask-cors
-discord.py
+Flask-SocketIO
+Flask-Cors
 gunicorn
-Flask
-flask-cors
-discord.py
+eventlet
+Werkzeug
+
+# --- Discord & Bots ---
+discord.py[voice]
 python-dotenv
+pynacl
+
+# --- Network & Async ---
 requests
 aiohttp
+httpx
+urllib3
+websockets
+websocket-client
+paramiko
+scapy
+speedtest-cli
+
+# --- Web Scraping & Parsing ---
+beautifulsoup4
+lxml
+html5lib
+selenium
+fake-useragent
+cloudscraper
+PySocks
+
+# --- AI & Data Science ---
+openai
+google-generativeai
+anthropic
+tiktoken
+pandas
+numpy
+scipy
+matplotlib
+scikit-learn
+
+# --- Utilities & Crypto ---
+cryptography
+pycryptodome
+psutil
 pytz
-Flask
-flask-cors
-discord.py
-aiohttp
-python-dotenv
+python-dateutil
+uuid
+pyperclip
+qrcode
+Pillow
+
+# --- Hacking & Security Tools ---
+colorama
+pyfiglet
+termcolor
+Flask-JWT-Extended
+bcrypt
